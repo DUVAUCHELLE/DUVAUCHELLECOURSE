@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#28785c">
+ <title>DuvauchelleCourse</title>
+ <style>
+   * { box-sizing: border-box; }
+   body {
+     margin: 0; font-family: -apple-system, BlinkMacSystemFont,
+     "Segoe UI", sans-serif; background: #f3f7f4; color: #20352b;
+   }
+   header {
+     background: #28785c; color: white; padding: 24px 18px;
+     border-radius: 0 0 24px 24px;
+   }
+   header h1 { margin: 0 0 6px; font-size: 25px; }
+   header p { margin: 0; opacity: .9; }
+   main { max-width: 650px; margin: auto; padding: 18px; }
+   .budget, .panel {
+     background: white; padding: 18px; border-radius: 18px;
+     margin-bottom: 16px; box-shadow: 0 3px 12px #183d2710;
+   }
+   .budget strong { font-size: 25px; }
+   .muted { color: #6b7c72; font-size: 13px; }
+   input, button {
+     font: inherit; border-radius: 11px; padding: 12px;
+   }
+   input { border: 1px solid #d6e2d9; min-width: 0; }
+   button {
+     border: 0; background: #28785c; color: white;
+     font-weight: 600; cursor: pointer;
+   }
+   .add { display: flex; gap: 8px; margin: 12px 0; }
+   .add input:first-child { flex: 1; width: 40%; }
+   .add input:nth-child(2) { width: 75px; }
+   .add button { padding: 10px; }
+   .item {
+     display: flex; align-items: center; gap: 10px;
+     padding: 13px 0; border-bottom: 1px solid #edf1ee;
+   }
+   .item:last-child { border-bottom: 0; }
+   .item input { width: 20px; height: 20px; accent-color: #28785c; }
+   .item .name { flex: 1; overflow-wrap: anywhere; }
+   .item.done .name { text-decoration: line-through; color: #829087; }
+   .price { font-size: 13px; color: #63766a; white-space: nowrap; }
+   .delete { background: #fbe9e6; color: #a63e30; padding: 8px 10px; }
+   .empty { color: #7a897f; text-align: center; padding: 20px 0; }
+   .clear { background: #e8f2eb; color: #28785c; margin-top: 12px; }
+   footer { text-align: center; color: #819087; font-size: 12px; padding: 12px; }
+ </style>
+</head>
+<body>
+ <header>
+   <h1>🛒 DuvauchelleCourse</h1>
+   <p>Les courses de toute la famille, simplement.</p>
+ </header>
+
+ <main>
+   <section class="budget">
+     <div class="muted">BUDGET PRÉVISIONNEL</div>
+     <p><strong id="total">0,00 €</strong></p>
+     <label for="budgetMax">Mon budget (€)</label>
+     <input id="budgetMax" type="number" min="0" step="0.01"
+       value="100" style="width:110px">
+     <p id="budgetInfo" class="muted">Budget restant : 100,00 €</p>
+   </section>
+
+   <section class="panel">
+     <h2>Ma liste de courses</h2>
+     <form id="addForm" class="add">
+       <input id="itemName" placeholder="Ex. : Lait" maxlength="100"
+         aria-label="Nom de l'article" required>
+       <input id="itemQty" type="number" min="1" max="999"
+         value="1" aria-label="Quantité" required>
+       <button type="submit">Ajouter</button>
+     </form>
+     <p class="muted">Coche les articles au fur et à mesure de tes courses.</p>
+     <div id="items"></div>
+     <button id="clearBought" class="clear" type="button">
+       Supprimer les articles cochés
+     </button>
+   </section>
+   <footer>
+     Version de départ · Les données sont enregistrées sur cet appareil.
+   </footer>
+ </main>
+
+ <script>
+   const $ = id => document.getElementById(id);
+   let items = [];
+   try {
+     items = JSON.parse(localStorage.getItem("duvauchelle-items") || "[]");
+     if (!Array.isArray(items)) items = [];
+   } catch { items = []; }
+
+   $("budgetMax").value = localStorage.getItem("duvauchelle-budget") || "100";
+
+   const euros = n => n.toLocaleString("fr-FR", {
+     style: "currency", currency: "EUR"
+   });
+
+   function save() {
+     localStorage.setItem("duvauchelle-items", JSON.stringify(items));
+     localStorage.setItem("duvauchelle-budget", $("budgetMax").value);
+   }
+
+   function render() {
+     const list = $("items");
+     list.replaceChildren();
+     let total = 0;
+
+     if (!items.length) {
+       const empty = document.createElement("p");
+       empty.className = "empty";
+       empty.textContent = "Ta liste est vide. Ajoute ton premier article !";
+       list.append(empty);
+     }
+
+     items.forEach(item => {
+       total += item.qty * item.price;
+       const row = document.createElement("div");
+       row.className = "item" + (item.done ? " done" : "");
+
+       const check = document.createElement("input");
+       check.type = "checkbox";
+       check.checked = item.done;
+       check.setAttribute("aria-label", "Article acheté");
+       check.addEventListener("change", () => {
+         item.done = check.checked; save(); render();
+       });
+
+       const name = document.createElement("span");
+       name.className = "name";
+       name.textContent = item.name + " × " + item.qty;
+
+       const price = document.createElement("span");
+       price.className = "price";
+       price.textContent = item.price > 0 ? euros(item.price * item.qty) : "";
+
+       const del = document.createElement("button");
+       del.className = "delete";
+       del.textContent = "×";
+       del.setAttribute("aria-label", "Supprimer " + item.name);
+       del.addEventListener("click", () => {
+         items = items.filter(x => x.id !== item.id);
+         save(); render();
+       });
+
+       row.append(check, name, price, del);
+       list.append(row);
+     });
+
+     $("total").textContent = euros(total);
+     const budget = Math.max(0, Number($("budgetMax").value) || 0);
+     const remaining = budget - total;
+     $("budgetInfo").textContent =
+       "Budget restant : " + euros(remaining);
+     $("budgetInfo").style.color = remaining < 0 ? "#b42318" : "#6b7c72";
+   }
+
+   $("addForm").addEventListener("submit", event => {
+     event.preventDefault();
+     const name = $("itemName").value.trim();
+     const qty = Number($("itemQty").value);
+     if (!name || !Number.isInteger(qty) || qty < 1 || qty > 999) return;
+
+     items.push({
+       id: Date.now().toString() + Math.random().toString(36).slice(2),
+       name, qty, price: 0, done: false
+     });
+     $("itemName").value = "";
+     $("itemQty").value = "1";
+     save(); render();
+   });
+
+   $("budgetMax").addEventListener("input", () => {
+     save(); render();
+   });
+
+   $("clearBought").addEventListener("click", () => {
+     items = items.filter(item => !item.done);
+     save(); render();
+   });
+
+   render();
+ </script>
+</body>
+</html>
