@@ -23,17 +23,29 @@
    }
    .budget strong { font-size: 25px; }
    .muted { color: #6b7c72; font-size: 13px; }
-   input, button {
-     font: inherit; border-radius: 11px; padding: 12px;
-   }
+   
+input, button {
+  font: inherit;
+  border-radius: 11px;
+  padding: 12px;
+}
+
 input {
   border: 1px solid #d6e2d9;
   min-width: 0;
   direction: ltr;
   text-align: left;
-  unicode-bidi: isolate;
+  unicode-bidi: plaintext;
+  writing-mode: horizontal-tb;
 }
-     border: 0; background: #28785c; color: white;
+
+button {
+  border: 0;
+  background: #28785c;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
      font-weight: 600; cursor: pointer;
    }
    .add { display: flex; gap: 8px; margin: 12px 0; }
