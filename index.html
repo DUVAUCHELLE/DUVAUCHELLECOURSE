@@ -74,6 +74,16 @@ button {
  </header>
 
  <main>
+  <section class="panel" id="accountPanel">
+ <h2>Compte familial</h2>
+ <p id="authStatus">Tu n'es pas connecté.</p>
+ <button id="loginButton" type="button">
+   Se connecter avec Google
+ </button>
+ <button id="logoutButton" type="button" hidden>
+   Se déconnecter
+ </button>
+</section>
    <section class="budget">
      <div class="muted">BUDGET PRÉVISIONNEL</div>
      <p><strong id="total">0,00 €</strong></p>
@@ -209,5 +219,65 @@ items.push({
 
    render();
  </script>
+ <script type="module">
+ import { initializeApp } from
+   "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+ import {
+   getAuth,
+   GoogleAuthProvider,
+   signInWithPopup,
+   onAuthStateChanged,
+   signOut
+ } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+ const firebaseConfig = {
+   apiKey: "AIzaSyBxl0SIVCnGxw8jSsBWs7oRtm2bWszztp0",
+   authDomain: "duvauchellecourse.firebaseapp.com",
+   projectId: "duvauchellecourse",
+   storageBucket: "duvauchellecourse.firebasestorage.app",
+   messagingSenderId: "503232104605",
+   appId: "1:503232104605:web:aa58a08c3c55e05de42c74",
+   measurementId: "G-XCXHDSR5DK"
+ };
+
+ const app = initializeApp(firebaseConfig);
+ const auth = getAuth(app);
+ const provider = new GoogleAuthProvider();
+
+ const status = document.getElementById("authStatus");
+ const loginButton = document.getElementById("loginButton");
+ const logoutButton = document.getElementById("logoutButton");
+
+ loginButton.addEventListener("click", async () => {
+   status.textContent = "Connexion en cours…";
+   try {
+     await signInWithPopup(auth, provider);
+   } catch (error) {
+     status.textContent =
+       "Connexion impossible : " + error.message;
+   }
+ });
+
+ logoutButton.addEventListener("click", async () => {
+   try {
+     await signOut(auth);
+   } catch (error) {
+     status.textContent = "Déconnexion impossible.";
+   }
+ });
+
+ onAuthStateChanged(auth, user => {
+   if (user) {
+     status.textContent = "Connecté : " + user.email;
+     loginButton.hidden = true;
+     logoutButton.hidden = false;
+   } else {
+     status.textContent = "Tu n'es pas connecté.";
+     loginButton.hidden = false;
+     logoutButton.hidden = true;
+   }
+ });
+</script>
+</body>
 </body>
 </html>
